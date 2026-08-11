@@ -7,12 +7,19 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; }
         .card { background: white; padding: 25px; border-radius: 16px; max-width: 380px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        button { background-color: #007bff; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; }
-        .result-group { margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 10px; }
-        .conc-title { font-size: 13px; color: #666; }
-        .value-box { font-size: 28px; font-weight: bold; margin: 5px 0; }
-        .nitrite-color { color: #28a745; }
-        .protein-color { color: #17a2b8; }
+        .btn-connect { background-color: #007bff; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 15px; }
+        
+        /* สไตล์สำหรับปุ่มสลับโหมด */
+        .mode-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid #ccc; background: #e9ecef; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .mode-btn.active-nitrite { background: #28a745; color: white; border-color: #28a745; }
+        .mode-btn.active-protein { background: #17a2b8; color: white; border-color: #17a2b8; }
+
+        .result-group { padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 15px; }
+        .conc-title { font-size: 14px; color: #666; font-weight: bold; }
+        .value-box { font-size: 32px; font-weight: bold; margin: 5px 0; color: #28a745; }
+        .unit-text { font-size: 14px; color: #888; }
+        
         .rgb-box { background: #e9ecef; padding: 8px; border-radius: 8px; color: #333; font-size: 13px; font-weight: 500; }
         #status { margin-top: 15px; font-size: 13px; color: #888; }
     </style>
@@ -21,16 +28,18 @@
 
 <div class="card">
     <h2>🧪 NitriScan Monitor</h2>
-    <button onclick="connectBLE()">🔗 เชื่อมต่ออุปกรณ์</button>
+    <button class="btn-connect" onclick="connectBLE()">🔗 เชื่อมต่ออุปกรณ์</button>
 
-    <div class="result-group">
-        <div class="conc-title">ความเข้มข้นไนไตรต์ (Nitrite)</div>
-        <div class="value-box nitrite-color" id="nitriteDisplay">0.000</div>
+    <!-- ปุ่มเลือกโหมดการคำนวณ -->
+    <div class="mode-container">
+        <button id="btnNitrite" class="mode-btn active-nitrite" onclick="setMode('nitrite')">ตรวจไนไตรต์</button>
+        <button id="btnProtein" class="mode-btn" onclick="setMode('protein')">ตรวจโปรตีน</button>
     </div>
 
     <div class="result-group">
-        <div class="conc-title">ความเข้มข้นโปรตีน (Protein)</div>
-        <div class="value-box protein-color" id="proteinDisplay">0.000</div>
+        <div class="conc-title" id="modeTitle">ความเข้มข้นไนไตรต์ (x)</div>
+        <div class="value-box" id="concDisplay">0.000</div>
+        <div class="unit-text" id="formulaText">สูตร: x = (111.6 - G) / 75.407</div>
     </div>
 
     <div class="rgb-box" id="rgbDisplay">R: -- | G: -- | B: --</div>
@@ -40,6 +49,49 @@
 <script>
     const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
     const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+    let currentMode = 'nitrite'; // โหมดเริ่มต้น
+    let lastR = 0, lastG = 0, lastB = 0;
+
+    // ฟังก์ชันสลับโหมดการทำงาน
+    function setMode(mode) {
+        currentMode = mode;
+        const btnNitrite = document.getElementById("btnNitrite");
+        const btnProtein = document.getElementById("btnProtein");
+        const concDisplay = document.getElementById("concDisplay");
+
+        if (mode === 'nitrite') {
+            btnNitrite.className = "mode-btn active-nitrite";
+            btnProtein.className = "mode-btn";
+            document.getElementById("modeTitle").innerText = "ความเข้มข้นไนไตรต์ (x)";
+            document.getElementById("formulaText").innerText = "สูตร: x = (111.6 - G) / 75.407";
+            concDisplay.style.color = "#28a745";
+        } else {
+            btnProtein.className = "mode-btn active-protein";
+            btnNitrite.className = "mode-btn";
+            document.getElementById("modeTitle").innerText = "ความเข้มข้นโปรตีน (m)";
+            document.getElementById("formulaText").innerText = "สูตร: m = (156.53 - R) / 0.244";
+            concDisplay.style.color = "#17a2b8";
+        }
+        
+        // คำนวณใหม่ทันทีตามค่าสีล่าสุด
+        updateCalculation();
+    }
+
+    // ฟังก์ชันคำนวณความเข้มข้นตามโหมดที่เลือก
+    function updateCalculation() {
+        let result = 0;
+        if (currentMode === 'nitrite') {
+            // ไนไตรต์: x = (111.6 - G) / 75.407
+            result = (111.600 - lastG) / 75.407;
+        } else {
+            // โปรตีน: m = (156.53 - R) / 0.244
+            result = (156.530 - lastR) / 0.244;
+        }
+
+        if (result < 0) result = 0; // ป้องกันค่าติดลบ
+        document.getElementById("concDisplay").innerText = result.toFixed(3);
+    }
 
     async function connectBLE() {
         const statusText = document.getElementById("status");
@@ -61,12 +113,15 @@
                 const decoder = new TextDecoder('utf-8');
                 const dataString = decoder.decode(event.target.value);
                 
-                // ข้อมูลที่รับมา: "R, G, B, Nitrite, Protein"
+                // รับข้อมูล CSV "R,G,B"
                 const values = dataString.split(',');
-                if (values.length >= 5) {
-                    document.getElementById("rgbDisplay").innerText = `R: ${values[0]} | G: ${values[1]} | B: ${values[2]}`;
-                    document.getElementById("nitriteDisplay").innerText = values[3];
-                    document.getElementById("proteinDisplay").innerText = values[4];
+                if (values.length >= 3) {
+                    lastR = parseFloat(values[0]);
+                    lastG = parseFloat(values[1]);
+                    lastB = parseFloat(values[2]);
+
+                    document.getElementById("rgbDisplay").innerText = `R: ${lastR} | G: ${lastG} | B: ${lastB}`;
+                    updateCalculation(); // คำนวณผลลัพธ์
                 }
             });
 
