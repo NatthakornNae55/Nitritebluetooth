@@ -3,46 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NitriScan Web Monitor</title>
+    <title>UrinaDX Web Monitor</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 16px; max-width: 380px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn-connect { background-color: #007bff; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 15px; }
-        
-        /* สไตล์สำหรับปุ่มสลับโหมด */
-        .mode-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 10px; border: 2px solid #ccc; background: #e9ecef; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .mode-btn.active-nitrite { background: #28a745; color: white; border-color: #28a745; }
-        .mode-btn.active-protein { background: #17a2b8; color: white; border-color: #17a2b8; }
+        * {
+            box-sizing: border-box;
+            font-family: 'Kanit', 'Segoe UI', Tahoma, sans-serif;
+        }
 
-        .result-group { padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 15px; }
-        .conc-title { font-size: 14px; color: #666; font-weight: bold; }
-        .value-box { font-size: 32px; font-weight: bold; margin: 5px 0; color: #28a745; }
-        .unit-text { font-size: 14px; color: #888; }
-        
-        .rgb-box { background: #e9ecef; padding: 8px; border-radius: 8px; color: #333; font-size: 13px; font-weight: 500; }
-        #status { margin-top: 15px; font-size: 13px; color: #888; }
+        body {
+            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 24px 20px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 25px rgba(186, 104, 200, 0.15);
+            text-align: left;
+        }
+
+        /* หัวข้อหลักเปลี่ยนเป็น UrinaDX */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        h2.title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c2c2c;
+            margin: 0;
+        }
+
+        .btn-connect {
+            background-color: #8e24aa;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.2);
+        }
+
+        .btn-connect:hover {
+            background-color: #7b1fa2;
+        }
+
+        /* ปุ่มเลือกโหมด */
+        .mode-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #f3f0f7;
+            color: #666666;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active-mode {
+            background: #ab47bc;
+            color: #ffffff;
+            box-shadow: 0 3px 8px rgba(171, 71, 188, 0.3);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c2c2c;
+            margin: 16px 0 10px 0;
+        }
+
+        /* กล่องสรุปผลแนวแคปซูลอ่อนๆ */
+        .summary-box {
+            background-color: #f8f5fc;
+            border: 1px solid #f0e6f7;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .summary-box span.val {
+            color: #8e24aa;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* กล่องสี RGB 3 แคปซูล */
+        .rgb-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .rgb-badge {
+            flex: 1;
+            background-color: #f8f5fc;
+            border: 1px solid #f0e6f7;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a4a4a;
+            text-align: center;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #8a8a8a;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🧪 NitriScan Monitor</h2>
-    <button class="btn-connect" onclick="connectBLE()">🔗 เชื่อมต่ออุปกรณ์</button>
+    <div class="app-header">
+        <h2 class="title">🧪 UrinaDX</h2>
+    </div>
 
-    <!-- ปุ่มเลือกโหมดการคำนวณ -->
+    <button class="btn-connect" onclick="connectBLE()">🔗 เชื่อมต่อ Bluetooth</button>
+
     <div class="mode-container">
-        <button id="btnNitrite" class="mode-btn active-nitrite" onclick="setMode('nitrite')">ตรวจไนไตรต์</button>
-        <button id="btnProtein" class="mode-btn" onclick="setMode('protein')">ตรวจโปรตีน</button>
+        <button id="btnNitrite" class="mode-btn active-mode" onclick="setMode('nitrite')">ไนไตรต์</button>
+        <button id="btnProtein" class="mode-btn" onclick="setMode('protein')">โปรตีน</button>
     </div>
 
-    <div class="result-group">
-        <div class="conc-title" id="modeTitle">ความเข้มข้นไนไตรต์ (x)</div>
-        <div class="value-box" id="concDisplay">0.000</div>
-        <div class="unit-text" id="formulaText">สูตร: x = (111.6 - G) / 75.407</div>
+    <div class="section-title">ผลการวิเคราะห์</div>
+    <div class="summary-box">
+        <span id="labelText">ปริมาณไนไตรต์:</span>
+        <span class="val" id="concDisplay">0.00 mg/L</span>
     </div>
 
-    <div class="rgb-box" id="rgbDisplay">R: -- | G: -- | B: --</div>
+    <div class="section-title">ข้อมูลสี (RGB)</div>
+    <div class="rgb-container">
+        <div class="rgb-badge" id="rDisplay">R: --</div>
+        <div class="rgb-badge" id="gDisplay">G: --</div>
+        <div class="rgb-badge" id="bDisplay">B: --</div>
+    </div>
+
     <p id="status">สถานะ: ยังไม่ได้เชื่อมต่อ</p>
 </div>
 
@@ -50,35 +179,27 @@
     const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
     const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
-    let currentMode = 'nitrite'; // โหมดเริ่มต้น
+    let currentMode = 'nitrite'; 
     let lastR = 0, lastG = 0, lastB = 0;
 
-    // ฟังก์ชันสลับโหมดการทำงาน
     function setMode(mode) {
         currentMode = mode;
         const btnNitrite = document.getElementById("btnNitrite");
         const btnProtein = document.getElementById("btnProtein");
-        const concDisplay = document.getElementById("concDisplay");
 
         if (mode === 'nitrite') {
-            btnNitrite.className = "mode-btn active-nitrite";
+            btnNitrite.className = "mode-btn active-mode";
             btnProtein.className = "mode-btn";
-            document.getElementById("modeTitle").innerText = "ความเข้มข้นไนไตรต์ (x)";
-            document.getElementById("formulaText").innerText = "สูตร: x = (111.6 - G) / 75.407";
-            concDisplay.style.color = "#28a745";
+            document.getElementById("labelText").innerText = "ปริมาณไนไตรต์:";
         } else {
-            btnProtein.className = "mode-btn active-protein";
+            btnProtein.className = "mode-btn active-mode";
             btnNitrite.className = "mode-btn";
-            document.getElementById("modeTitle").innerText = "ความเข้มข้นโปรตีน (m)";
-            document.getElementById("formulaText").innerText = "สูตร: m = (156.53 - R) / 0.244";
-            concDisplay.style.color = "#17a2b8";
+            document.getElementById("labelText").innerText = "ปริมาณโปรตีน:";
         }
         
-        // คำนวณใหม่ทันทีตามค่าสีล่าสุด
         updateCalculation();
     }
 
-    // ฟังก์ชันคำนวณความเข้มข้นตามโหมดที่เลือก
     function updateCalculation() {
         let result = 0;
         if (currentMode === 'nitrite') {
@@ -89,8 +210,8 @@
             result = (156.530 - lastR) / 0.244;
         }
 
-        if (result < 0) result = 0; // ป้องกันค่าติดลบ
-        document.getElementById("concDisplay").innerText = result.toFixed(3);
+        if (result < 0) result = 0; 
+        document.getElementById("concDisplay").innerText = result.toFixed(2) + " mg/L";
     }
 
     async function connectBLE() {
@@ -113,25 +234,27 @@
                 const decoder = new TextDecoder('utf-8');
                 const dataString = decoder.decode(event.target.value);
                 
-                // รับข้อมูล CSV "R,G,B"
                 const values = dataString.split(',');
                 if (values.length >= 3) {
                     lastR = parseFloat(values[0]);
                     lastG = parseFloat(values[1]);
                     lastB = parseFloat(values[2]);
 
-                    document.getElementById("rgbDisplay").innerText = `R: ${lastR} | G: ${lastG} | B: ${lastB}`;
-                    updateCalculation(); // คำนวณผลลัพธ์
+                    document.getElementById("rDisplay").innerText = `R: ${lastR.toFixed(2)}`;
+                    document.getElementById("gDisplay").innerText = `G: ${lastG.toFixed(2)}`;
+                    document.getElementById("bDisplay").innerText = `B: ${lastB.toFixed(2)}`;
+                    
+                    updateCalculation();
                 }
             });
 
             statusText.innerText = "🟢 เชื่อมต่อสำเร็จแล้ว!";
-            statusText.style.color = "green";
+            statusText.style.color = "#8e24aa";
 
         } catch (error) {
             console.error(error);
             statusText.innerText = "🔴 การเชื่อมต่อล้มเหลว";
-            statusText.style.color = "red";
+            statusText.style.color = "#d32f2f";
         }
     }
 </script>
