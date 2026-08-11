@@ -10,8 +10,9 @@
             font-family: 'Kanit', 'Segoe UI', Tahoma, sans-serif;
         }
 
+        /* ปรับพื้นหลังให้เป็นสีนวลตา สบายสายตา */
         body {
-            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 100%);
+            background: linear-gradient(135deg, #f4f5f8 0%, #eaedf4 100%);
             min-height: 100vh;
             margin: 0;
             padding: 20px 15px;
@@ -22,42 +23,44 @@
 
         .card {
             background: #ffffff;
-            padding: 24px 20px;
-            border-radius: 24px;
+            padding: 28px 22px;
+            border-radius: 28px;
             width: 100%;
             max-width: 380px;
-            box-shadow: 0 10px 25px rgba(186, 104, 200, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
             text-align: left;
         }
 
-        /* หัวข้อหลักเปลี่ยนเป็น UrinaDX */
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         h2.title {
             font-size: 22px;
             font-weight: 700;
-            color: #2c2c2c;
+            color: #1a1a1a;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-connect {
             background-color: #8e24aa;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 13px 20px;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 14px;
+            border-radius: 16px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.2);
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.25);
         }
 
         .btn-connect:hover {
@@ -68,16 +71,16 @@
         .mode-container {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .mode-btn {
             flex: 1;
-            padding: 10px;
+            padding: 11px;
             border: none;
-            background: #f3f0f7;
+            background: #f1edfb;
             color: #666666;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -87,22 +90,22 @@
         .mode-btn.active-mode {
             background: #ab47bc;
             color: #ffffff;
-            box-shadow: 0 3px 8px rgba(171, 71, 188, 0.3);
+            box-shadow: 0 4px 10px rgba(171, 71, 188, 0.3);
         }
 
         .section-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #2c2c2c;
-            margin: 16px 0 10px 0;
+            margin: 18px 0 10px 0;
         }
 
-        /* กล่องสรุปผลแนวแคปซูลอ่อนๆ */
+        /* กล่องสรุปผล */
         .summary-box {
-            background-color: #f8f5fc;
-            border: 1px solid #f0e6f7;
-            padding: 14px 18px;
-            border-radius: 16px;
+            background-color: #f7f4fd;
+            border: 1px solid #e9dff7;
+            padding: 16px 18px;
+            border-radius: 18px;
             font-size: 15px;
             font-weight: 600;
             color: #333333;
@@ -112,10 +115,12 @@
             justify-content: space-between;
         }
 
+        /* ค่าความเข้มข้น: ปรับตัวเลขเป็นสีม่วงเข้ม คมชัด อ่านง่าย */
         .summary-box span.val {
-            color: #8e24aa;
-            font-size: 18px;
-            font-weight: 700;
+            color: #4a148c;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
         }
 
         /* กล่องสี RGB 3 แคปซูล */
@@ -127,20 +132,20 @@
 
         .rgb-badge {
             flex: 1;
-            background-color: #f8f5fc;
-            border: 1px solid #f0e6f7;
-            padding: 8px 12px;
+            background-color: #f7f4fd;
+            border: 1px solid #e9dff7;
+            padding: 10px 12px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
-            color: #4a4a4a;
+            color: #333333;
             text-align: center;
         }
 
         #status {
-            margin-top: 20px;
+            margin-top: 22px;
             font-size: 12px;
-            color: #8a8a8a;
+            color: #888888;
             text-align: center;
         }
     </style>
@@ -154,17 +159,20 @@
 
     <button class="btn-connect" onclick="connectBLE()">🔗 เชื่อมต่อ Bluetooth</button>
 
+    <!-- เลือกโหมด -->
     <div class="mode-container">
         <button id="btnNitrite" class="mode-btn active-mode" onclick="setMode('nitrite')">ไนไตรต์</button>
         <button id="btnProtein" class="mode-btn" onclick="setMode('protein')">โปรตีน</button>
     </div>
 
+    <!-- สรุปผล -->
     <div class="section-title">ผลการวิเคราะห์</div>
     <div class="summary-box">
         <span id="labelText">ปริมาณไนไตรต์:</span>
         <span class="val" id="concDisplay">0.00 mg/L</span>
     </div>
 
+    <!-- ข้อมูลสี (RGB) -->
     <div class="section-title">ข้อมูลสี (RGB)</div>
     <div class="rgb-container">
         <div class="rgb-badge" id="rDisplay">R: --</div>
@@ -249,12 +257,12 @@
             });
 
             statusText.innerText = "🟢 เชื่อมต่อสำเร็จแล้ว!";
-            statusText.style.color = "#8e24aa";
+            statusText.style.color = "#2e7d32";
 
         } catch (error) {
             console.error(error);
             statusText.innerText = "🔴 การเชื่อมต่อล้มเหลว";
-            statusText.style.color = "#d32f2f";
+            statusText.style.color = "#c62828";
         }
     }
 </script>
