@@ -10,7 +10,6 @@
             font-family: 'Kanit', 'Segoe UI', Tahoma, sans-serif;
         }
 
-        /* ปรับพื้นหลังให้เป็นสีนวลตา สบายสายตา */
         body {
             background: linear-gradient(135deg, #f4f5f8 0%, #eaedf4 100%);
             min-height: 100vh;
@@ -43,9 +42,6 @@
             font-weight: 700;
             color: #1a1a1a;
             margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-connect {
@@ -58,16 +54,32 @@
             border-radius: 16px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
             transition: all 0.2s ease;
             box-shadow: 0 4px 12px rgba(142, 36, 170, 0.25);
         }
 
-        .btn-connect:hover {
-            background-color: #7b1fa2;
+        /* ปุ่มสั่งอ่านค่าสี */
+        .btn-measure {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+            display: none; /* ซ่อนไว้ก่อน จะแสดงเมื่อเชื่อมต่อสำเร็จ */
         }
 
-        /* ปุ่มเลือกโหมด */
+        .btn-measure:active {
+            transform: scale(0.98);
+        }
+
         .mode-container {
             display: flex;
             gap: 10px;
@@ -100,7 +112,6 @@
             margin: 18px 0 10px 0;
         }
 
-        /* กล่องสรุปผล */
         .summary-box {
             background-color: #f7f4fd;
             border: 1px solid #e9dff7;
@@ -115,15 +126,12 @@
             justify-content: space-between;
         }
 
-        /* ค่าความเข้มข้น: ปรับตัวเลขเป็นสีม่วงเข้ม คมชัด อ่านง่าย */
         .summary-box span.val {
             color: #4a148c;
             font-size: 20px;
             font-weight: 800;
-            letter-spacing: -0.3px;
         }
 
-        /* กล่องสี RGB 3 แคปซูล */
         .rgb-container {
             display: flex;
             justify-content: space-between;
@@ -157,22 +165,22 @@
         <h2 class="title">🧪 UrinaDX</h2>
     </div>
 
-    <button class="btn-connect" onclick="connectBLE()">🔗 เชื่อมต่อ Bluetooth</button>
+    <button class="btn-connect" id="btnConnect" onclick="connectBLE()">🔗 เชื่อมต่อ Bluetooth</button>
+    
+    <!-- ปุ่มสั่งอ่านค่า จะเด้งขึ้นมาเมื่อเชื่อมต่อ BLE แล้ว -->
+    <button class="btn-measure" id="btnMeasure" onclick="triggerRead()">🎯 กดเพื่อวัดค่าสาร</button>
 
-    <!-- เลือกโหมด -->
     <div class="mode-container">
         <button id="btnNitrite" class="mode-btn active-mode" onclick="setMode('nitrite')">ไนไตรต์</button>
         <button id="btnProtein" class="mode-btn" onclick="setMode('protein')">โปรตีน</button>
     </div>
 
-    <!-- สรุปผล -->
     <div class="section-title">ผลการวิเคราะห์</div>
     <div class="summary-box">
         <span id="labelText">ปริมาณไนไตรต์:</span>
         <span class="val" id="concDisplay">0.00 mg/L</span>
     </div>
 
-    <!-- ข้อมูลสี (RGB) -->
     <div class="section-title">ข้อมูลสี (RGB)</div>
     <div class="rgb-container">
         <div class="rgb-badge" id="rDisplay">R: --</div>
@@ -187,6 +195,7 @@
     const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
     const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
+    let bleCharacteristic = null;
     let currentMode = 'nitrite'; 
     let lastR = 0, lastG = 0, lastB = 0;
 
@@ -211,15 +220,27 @@
     function updateCalculation() {
         let result = 0;
         if (currentMode === 'nitrite') {
-            // ไนไตรต์: x = (111.6 - G) / 75.407
             result = (111.600 - lastG) / 75.407;
         } else {
-            // โปรตีน: m = (156.53 - R) / 0.244
             result = (156.530 - lastR) / 0.244;
         }
 
         if (result < 0) result = 0; 
         document.getElementById("concDisplay").innerText = result.toFixed(2) + " mg/L";
+    }
+
+    // ฟังก์ชันส่งคำสั่ง "READ" ไปยัง ESP32
+    async function triggerRead() {
+        if (bleCharacteristic) {
+            try {
+                const encoder = new TextEncoder();
+                await bleCharacteristic.writeValue(encoder.encode("READ"));
+                document.getElementById("status").innerText = "⏳ กำลังอ่านค่าสี...";
+            } catch (error) {
+                console.error("Trigger Error:", error);
+                document.getElementById("status").innerText = "🔴 ส่งคำสั่งล้มเหลว";
+            }
+        }
     }
 
     async function connectBLE() {
@@ -235,10 +256,10 @@
             statusText.innerText = "กำลังเชื่อมต่อกับ " + device.name + "...";
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
-            const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+            bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
-            await characteristic.startNotifications();
-            characteristic.addEventListener('characteristicvaluechanged', (event) => {
+            await bleCharacteristic.startNotifications();
+            bleCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                 const decoder = new TextDecoder('utf-8');
                 const dataString = decoder.decode(event.target.value);
                 
@@ -253,11 +274,14 @@
                     document.getElementById("bDisplay").innerText = `B: ${lastB.toFixed(2)}`;
                     
                     updateCalculation();
+                    statusText.innerText = "🟢 อ่านค่าเรียบร้อย!";
+                    statusText.style.color = "#2e7d32";
                 }
             });
 
-            statusText.innerText = "🟢 เชื่อมต่อสำเร็จแล้ว!";
+            statusText.innerText = "🟢 เชื่อมต่อสำเร็จ! กดปุ่มวัดค่าได้เลย";
             statusText.style.color = "#2e7d32";
+            document.getElementById("btnMeasure").style.display = "block"; // แสดงปุ่มกดวัดค่า
 
         } catch (error) {
             console.error(error);
